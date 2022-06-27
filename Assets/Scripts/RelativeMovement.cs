@@ -6,12 +6,13 @@ public class RelativeMovement : MonoBehaviour
 {
     // this script needs a reference to the object to move relative to
     [SerializeField] Transform target;
+    public float rotSpeed = 15.0f;
 
     private void Update()
     {
         // start with vector (0,0,0) and add movement components progressively.
         Vector3 movement = Vector3.zero;
-
+        
         // remember getaxis will vary between -1 and 1!
         float horInput = Input.GetAxis("Horizontal");
         float vertInput = Input.GetAxis("Vertical");
@@ -28,8 +29,11 @@ public class RelativeMovement : MonoBehaviour
             // add together the input in each direction to get the combined movement vector
             movement = (right * horInput) + (forward * vertInput);
 
-            // LookRotation() calculates a quaternion facing in that direction
-            transform.rotation = Quaternion.LookRotation(movement);
+            // LookRotation() value is used indirectly as the target direction to rotate toward
+            Quaternion direction = Quaternion.LookRotation(movement);
+            
+            // Quaternion.Lerp() method smoothly changes (interpolates) between the current and target rotations.
+            transform.rotation = Quaternion.Lerp(transform.rotation, direction, rotSpeed * Time.deltaTime);
         }
 
     }
