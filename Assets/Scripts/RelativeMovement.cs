@@ -11,10 +11,21 @@ public class RelativeMovement : MonoBehaviour
     public float rotSpeed = 15.0f;
     public float moveSpeed = 6.0f;
 
+    // jumping and falling related variables
+    public float jumpSpeed = 15.0f;
+    public float gravity = -9.8f;
+    public float terminalVelocity = -10.0f;
+    public float minFall = -1.5f;
+
+    private float vertSpeed;
+
     private CharacterController charController;
     private void Start()
     {
         charController = GetComponent<CharacterController>();
+
+        // initialize the vertical speed to the minimum falling speed at the start of the existing function
+        vertSpeed = minFall;
     }
 
     private void Update()
@@ -42,19 +53,42 @@ public class RelativeMovement : MonoBehaviour
             movement *= moveSpeed;
 
             // limit diagonal movement to the same speed as movement along an axis
-            movement = Vector3.ClampMagnitude(movement, moveSpeed);
-
-            // multiply movement by deltaTime to make it frame-rate independent
-            movement *= Time.deltaTime;
-            charController.Move(movement);
-
+            movement = Vector3.ClampMagnitude(movement, moveSpeed);              
 
             // LookRotation() value is used indirectly as the target direction to rotate toward
             Quaternion direction = Quaternion.LookRotation(movement);
             
             // Quaternion.Lerp() method smoothly changes (interpolates) between the current and target rotations.
             transform.rotation = Quaternion.Lerp(transform.rotation, direction, rotSpeed * Time.deltaTime);
+                        
         }
+        // CharacterController has an isGrounded property to check if the controller is on the ground
+        if (charController.isGrounded)
+        {
+            // react to the jump button while on the ground
+            if (Input.GetButtonDown("Jump"))
+            {
+                vertSpeed = jumpSpeed;
+            }
+            else
+            {
+                vertSpeed = minFall;
+            }
+        }
+        else
+        {
+            // if not on the ground, apply gravity until terminal velocity is reached
+            vertSpeed += gravity * 5 * Time.deltaTime;
+            if (vertSpeed < terminalVelocity)
+            {
+                vertSpeed = terminalVelocity;
+            }
+        }
+        movement.y = vertSpeed;
+
+        // multiply movement by deltaTime to make it frame-rate independent
+        movement *= Time.deltaTime;
+        charController.Move(movement);
 
     }
 }
