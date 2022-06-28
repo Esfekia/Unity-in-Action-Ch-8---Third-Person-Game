@@ -85,6 +85,7 @@ public class RelativeMovement : MonoBehaviour
             }
         }
         movement.y = vertSpeed;
+        
 
         // multiply movement by deltaTime to make it frame-rate independent
         movement *= Time.deltaTime;
