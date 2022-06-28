@@ -2,11 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class RelativeMovement : MonoBehaviour
 {
     // this script needs a reference to the object to move relative to
     [SerializeField] Transform target;
+        
     public float rotSpeed = 15.0f;
+    public float moveSpeed = 6.0f;
+
+    private CharacterController charController;
+    private void Start()
+    {
+        charController = GetComponent<CharacterController>();
+    }
 
     private void Update()
     {
@@ -28,6 +37,17 @@ public class RelativeMovement : MonoBehaviour
 
             // add together the input in each direction to get the combined movement vector
             movement = (right * horInput) + (forward * vertInput);
+
+            // the facing directions are magnitude 1, so multiply with the desired speed value
+            movement *= moveSpeed;
+
+            // limit diagonal movement to the same speed as movement along an axis
+            movement = Vector3.ClampMagnitude(movement, moveSpeed);
+
+            // multiply movement by deltaTime to make it frame-rate independent
+            movement *= Time.deltaTime;
+            charController.Move(movement);
+
 
             // LookRotation() value is used indirectly as the target direction to rotate toward
             Quaternion direction = Quaternion.LookRotation(movement);
