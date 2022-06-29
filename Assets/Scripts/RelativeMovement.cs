@@ -7,9 +7,6 @@ public class RelativeMovement : MonoBehaviour
 {
     // this script needs a reference to the object to move relative to
     [SerializeField] Transform target;
-    
-    // we need to store collusion data between functions
-    private ControllerColliderHit contact;
 
     public float moveSpeed = 6.0f;
     public float rotSpeed = 15.0f;
@@ -19,7 +16,6 @@ public class RelativeMovement : MonoBehaviour
     public float minFall = -1.5f;
 
     private float vertSpeed;
-    private ControllerColliderHit contact;
 
     private CharacterController charController;
     private void Start()
@@ -66,6 +62,7 @@ public class RelativeMovement : MonoBehaviour
             transform.rotation = Quaternion.Lerp(transform.rotation, direction, rotSpeed * Time.deltaTime);
                         
         }
+<<<<<<< HEAD
         // raycast down to address steep slopes and dropoff edge
         bool hitGround = false;
         RaycastHit hit;
@@ -78,35 +75,28 @@ public class RelativeMovement : MonoBehaviour
         // could _charController.isGrounded instead, but then cannot workaround dropoff edge
 
         if (hitGround)
+=======
+        // CharacterController has an isGrounded property to check if the controller is on the ground
+        if (charController.isGrounded)
+>>>>>>> parent of 3095457 (Raycasting is used instead of Controllers isGrounded for detecting if the player can jump. Now slope/edge movement is better.)
         {
+            // react to the jump button while on the ground
             if (Input.GetButtonDown("Jump"))
             {
                 vertSpeed = jumpSpeed;
             }
             else
             {
-                vertSpeed = minFall;                
+                vertSpeed = minFall;
             }
         }        
         else
         {
+            // if not on the ground, apply gravity until terminal velocity is reached
             vertSpeed += gravity * 5 * Time.deltaTime;
             if (vertSpeed < terminalVelocity)
             {
                 vertSpeed = terminalVelocity;
-            }            
-
-            // workaround for standing on dropoff edge
-            if (charController.isGrounded)
-            {
-                if (Vector3.Dot(movement, contact.normal) < 0)
-                {
-                    movement = contact.normal * moveSpeed;
-                }
-                else
-                {
-                    movement += contact.normal * moveSpeed;
-                }
             }
         }
 
@@ -125,14 +115,18 @@ public class RelativeMovement : MonoBehaviour
         }
         
         movement.y = vertSpeed;
+        
 
+        // multiply movement by deltaTime to make it frame-rate independent
         movement *= Time.deltaTime;
         charController.Move(movement);
-    }
 
+<<<<<<< HEAD
     // store the collision data in the callback when a collision is detected
     void OnControllerColliderHit(ControllerColliderHit hit)
     {
         contact = hit;
+=======
+>>>>>>> parent of 3095457 (Raycasting is used instead of Controllers isGrounded for detecting if the player can jump. Now slope/edge movement is better.)
     }
 }
