@@ -7,14 +7,15 @@ public class RelativeMovement : MonoBehaviour
 {
     // this script needs a reference to the object to move relative to
     [SerializeField] Transform target;
-        
-    public float rotSpeed = 15.0f;
-    public float moveSpeed = 6.0f;
 
-    // jumping and falling related variables
+    // we need to store collusion data between functions
+    private ControllerColliderHit contact;
+
+    public float moveSpeed = 6.0f;
+    public float rotSpeed = 15.0f;
     public float jumpSpeed = 15.0f;
     public float gravity = -9.8f;
-    public float terminalVelocity = -10.0f;
+    public float terminalVelocity = -20.0f;
     public float minFall = -1.5f;
 
     private float vertSpeed;
@@ -62,10 +63,21 @@ public class RelativeMovement : MonoBehaviour
             transform.rotation = Quaternion.Lerp(transform.rotation, direction, rotSpeed * Time.deltaTime);
                         
         }
-        // CharacterController has an isGrounded property to check if the controller is on the ground
-        if (charController.isGrounded)
+        bool hitGround = false;
+        RaycastHit hit;
+
+        // check if player is falling
+        if (vertSpeed <0 && Physics.Raycast(transform.position, Vector3.down, out hit))
         {
-            // react to the jump button while on the ground
+            // determine distance to check against (extended slightly beyond the bottom of the capsule
+            float check = (charController.height + charController.radius) / 1.9f;
+            hitGround = hit.distance <= check;
+        }
+        
+        // instead of using isGrounded, check the raycasting result
+
+        if (hitGround)
+        {
             if (Input.GetButtonDown("Jump"))
             {
                 vertSpeed = jumpSpeed;
@@ -74,7 +86,7 @@ public class RelativeMovement : MonoBehaviour
             {
                 vertSpeed = minFall;
             }
-        }
+        }        
         else
         {
             // if not on the ground, apply gravity until terminal velocity is reached
@@ -84,12 +96,31 @@ public class RelativeMovement : MonoBehaviour
                 vertSpeed = terminalVelocity;
             }
         }
+
+        // if raycasting did not detect ground, but the capsule is touching the ground
+        if (charController.isGrounded)
+        {
+            if (Vector3.Dot(movement, contact.normal) < 0)
+            {
+                // respond slightly differently depending on whether the character is facing the contact point
+                movement = contact.normal * moveSpeed;
+            }
+            else
+            {
+                movement += contact.normal * moveSpeed;
+            }
+        }
+        
         movement.y = vertSpeed;
         
 
         // multiply movement by deltaTime to make it frame-rate independent
         movement *= Time.deltaTime;
         charController.Move(movement);
-
+    }
+    // store the collision data in the callback when a collision is detected
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        contact = hit;
     }
 }
