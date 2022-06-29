@@ -7,8 +7,9 @@ public class RelativeMovement : MonoBehaviour
 {
     // this script needs a reference to the object to move relative to
     [SerializeField] Transform target;
-        
-   
+
+    private Animator animator;
+
     public float rotSpeed = 15.0f;
     public float moveSpeed = 6.0f;
 
@@ -28,6 +29,8 @@ public class RelativeMovement : MonoBehaviour
 
         // initialize the vertical speed to the minimum falling speed at the start of the existing function
         vertSpeed = minFall;
+
+        animator = GetComponent<Animator>();
     }
 
     private void Update()
@@ -64,6 +67,9 @@ public class RelativeMovement : MonoBehaviour
             transform.rotation = Quaternion.Lerp(transform.rotation, direction, rotSpeed * Time.deltaTime);
                         
         }
+
+        animator.SetFloat("Speed", movement.sqrMagnitude);
+
         // raycast down to address steep slopes and dropoff edge
         bool hitGround = false;
         RaycastHit hit;
@@ -82,7 +88,8 @@ public class RelativeMovement : MonoBehaviour
             }
             else
             {
-                vertSpeed = minFall;                
+                vertSpeed = minFall;
+                animator.SetBool("Jumping", false);
             }
         }
         else
@@ -91,7 +98,12 @@ public class RelativeMovement : MonoBehaviour
             if (vertSpeed < terminalVelocity)
             {
                 vertSpeed = terminalVelocity;
-            }            
+            }      
+            // need to prevent jumping animation when the game starts and briefly the player is in air.
+            if (contact != null)
+            {
+                animator.SetBool("Jumping", true);
+            }
 
             // workaround for standing on dropoff edge
             if (charController.isGrounded)
