@@ -7,7 +7,7 @@ public class OrbitCamera : MonoBehaviour
     // serialized reference to the object to orbit around
     [SerializeField] Transform target;
 
-    public float rotSpeed = 0.2f;
+    public float rotSpeed = 1.5f;
 
     private float rotY;
     private Vector3 offset;
@@ -32,7 +32,7 @@ public class OrbitCamera : MonoBehaviour
         // .. or rotate quickly with the mouse
         else
         {
-            rotY += Input.GetAxis("Mouse X") * rotSpeed * 10;
+            rotY += Input.GetAxis("Mouse X") * rotSpeed * 3;
         }
 
         // convert rotation angle to a quaternion

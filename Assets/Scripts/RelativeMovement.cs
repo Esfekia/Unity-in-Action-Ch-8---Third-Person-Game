@@ -7,15 +7,15 @@ public class RelativeMovement : MonoBehaviour
 {
     // this script needs a reference to the object to move relative to
     [SerializeField] Transform target;
-        
-   
-    public float rotSpeed = 15.0f;
-    public float moveSpeed = 6.0f;
+    
+    // we need to store collusion data between functions
+    private ControllerColliderHit contact;
 
-    // jumping and falling related variables
+    public float moveSpeed = 6.0f;
+    public float rotSpeed = 15.0f;
     public float jumpSpeed = 15.0f;
     public float gravity = -9.8f;
-    public float terminalVelocity = -10.0f;
+    public float terminalVelocity = -20.0f;
     public float minFall = -1.5f;
 
     private float vertSpeed;
@@ -24,10 +24,11 @@ public class RelativeMovement : MonoBehaviour
     private CharacterController charController;
     private void Start()
     {
-        charController = GetComponent<CharacterController>();
-
         // initialize the vertical speed to the minimum falling speed at the start of the existing function
         vertSpeed = minFall;
+
+        charController = GetComponent<CharacterController>();
+                
     }
 
     private void Update()
@@ -57,6 +58,7 @@ public class RelativeMovement : MonoBehaviour
             // limit diagonal movement to the same speed as movement along an axis
             movement = Vector3.ClampMagnitude(movement, moveSpeed);              
 
+            // face movement direction
             // LookRotation() value is used indirectly as the target direction to rotate toward
             Quaternion direction = Quaternion.LookRotation(movement);
             
@@ -74,6 +76,7 @@ public class RelativeMovement : MonoBehaviour
         }
         // y movement: possibly jump impulse up, always accel down
         // could _charController.isGrounded instead, but then cannot workaround dropoff edge
+
         if (hitGround)
         {
             if (Input.GetButtonDown("Jump"))
@@ -84,7 +87,7 @@ public class RelativeMovement : MonoBehaviour
             {
                 vertSpeed = minFall;                
             }
-        }
+        }        
         else
         {
             vertSpeed += gravity * 5 * Time.deltaTime;
@@ -106,13 +109,28 @@ public class RelativeMovement : MonoBehaviour
                 }
             }
         }
+
+        // if raycasting did not detect ground, but the capsule is touching the ground
+        if (charController.isGrounded)
+        {
+            if (Vector3.Dot(movement, contact.normal) < 0)
+            {
+                // respond slightly differently depending on whether the character is facing the contact point
+                movement = contact.normal * moveSpeed;
+            }
+            else
+            {
+                movement += contact.normal * moveSpeed;
+            }
+        }
+        
         movement.y = vertSpeed;
 
         movement *= Time.deltaTime;
         charController.Move(movement);
     }
 
-    // store collision to use in Update
+    // store the collision data in the callback when a collision is detected
     void OnControllerColliderHit(ControllerColliderHit hit)
     {
         contact = hit;
