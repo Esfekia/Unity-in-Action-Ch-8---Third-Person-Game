@@ -7,7 +7,7 @@ public class RelativeMovement : MonoBehaviour
 {
     // this script needs a reference to the object to move relative to
     [SerializeField] Transform target;
-
+    
     // we need to store collusion data between functions
     private ControllerColliderHit contact;
 
@@ -19,6 +19,7 @@ public class RelativeMovement : MonoBehaviour
     public float minFall = -1.5f;
 
     private float vertSpeed;
+    private ControllerColliderHit contact;
 
     private CharacterController charController;
     private void Start()
@@ -65,22 +66,16 @@ public class RelativeMovement : MonoBehaviour
             transform.rotation = Quaternion.Lerp(transform.rotation, direction, rotSpeed * Time.deltaTime);
                         
         }
-
         // raycast down to address steep slopes and dropoff edge
         bool hitGround = false;
         RaycastHit hit;
-
-        // check if player is falling
         if (vertSpeed < 0 && Physics.Raycast(transform.position, Vector3.down, out hit))
         {
-            // determine distance to check against (extended slightly beyond the bottom of the capsule
             float check = (charController.height + charController.radius) / 1.9f;
-
-            // be sure to check slightly beyond bottom of capsule
-            hitGround = hit.distance <= check;
+            hitGround = hit.distance <= check;  // to be sure check slightly beyond bottom of capsule
         }
-        
-        // instead of using isGrounded, check the raycasting result
+        // y movement: possibly jump impulse up, always accel down
+        // could _charController.isGrounded instead, but then cannot workaround dropoff edge
 
         if (hitGround)
         {
@@ -90,16 +85,28 @@ public class RelativeMovement : MonoBehaviour
             }
             else
             {
-                vertSpeed = minFall;
+                vertSpeed = minFall;                
             }
         }        
         else
         {
-            // if not on the ground, apply gravity until terminal velocity is reached
             vertSpeed += gravity * 5 * Time.deltaTime;
             if (vertSpeed < terminalVelocity)
             {
                 vertSpeed = terminalVelocity;
+            }            
+
+            // workaround for standing on dropoff edge
+            if (charController.isGrounded)
+            {
+                if (Vector3.Dot(movement, contact.normal) < 0)
+                {
+                    movement = contact.normal * moveSpeed;
+                }
+                else
+                {
+                    movement += contact.normal * moveSpeed;
+                }
             }
         }
 
@@ -118,12 +125,11 @@ public class RelativeMovement : MonoBehaviour
         }
         
         movement.y = vertSpeed;
-        
 
-        // multiply movement by deltaTime to make it frame-rate independent
         movement *= Time.deltaTime;
         charController.Move(movement);
     }
+
     // store the collision data in the callback when a collision is detected
     void OnControllerColliderHit(ControllerColliderHit hit)
     {
