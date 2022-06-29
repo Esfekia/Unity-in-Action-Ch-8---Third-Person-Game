@@ -23,10 +23,11 @@ public class RelativeMovement : MonoBehaviour
     private CharacterController charController;
     private void Start()
     {
-        charController = GetComponent<CharacterController>();
-
         // initialize the vertical speed to the minimum falling speed at the start of the existing function
         vertSpeed = minFall;
+
+        charController = GetComponent<CharacterController>();
+                
     }
 
     private void Update()
@@ -56,6 +57,7 @@ public class RelativeMovement : MonoBehaviour
             // limit diagonal movement to the same speed as movement along an axis
             movement = Vector3.ClampMagnitude(movement, moveSpeed);              
 
+            // face movement direction
             // LookRotation() value is used indirectly as the target direction to rotate toward
             Quaternion direction = Quaternion.LookRotation(movement);
             
@@ -63,14 +65,18 @@ public class RelativeMovement : MonoBehaviour
             transform.rotation = Quaternion.Lerp(transform.rotation, direction, rotSpeed * Time.deltaTime);
                         
         }
+
+        // raycast down to address steep slopes and dropoff edge
         bool hitGround = false;
         RaycastHit hit;
 
         // check if player is falling
-        if (vertSpeed <0 && Physics.Raycast(transform.position, Vector3.down, out hit))
+        if (vertSpeed < 0 && Physics.Raycast(transform.position, Vector3.down, out hit))
         {
             // determine distance to check against (extended slightly beyond the bottom of the capsule
             float check = (charController.height + charController.radius) / 1.9f;
+
+            // be sure to check slightly beyond bottom of capsule
             hitGround = hit.distance <= check;
         }
         
@@ -119,7 +125,7 @@ public class RelativeMovement : MonoBehaviour
         charController.Move(movement);
     }
     // store the collision data in the callback when a collision is detected
-    private void OnControllerColliderHit(ControllerColliderHit hit)
+    void OnControllerColliderHit(ControllerColliderHit hit)
     {
         contact = hit;
     }
